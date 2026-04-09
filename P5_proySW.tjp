@@ -69,7 +69,7 @@ resource dev2 "Samantha Müller" {
 resource dev3 "Peter Green" {
   email "kkk@unizar.es"
 }
-resource dev4 "Iván Larramona" {
+resource dev4 "Iván Larramona Berbegal" {
   email "903645@unizar.es"
   limits { dailymax 4h }
 }
