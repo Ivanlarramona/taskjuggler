@@ -19,7 +19,7 @@ project pSix "Web Game"  2025-12-15 +5m {
   # the project reports. If not specified, the current day will be
   # used, but this will likely be outside of the project range, so it
   # can't be seen in the reports.
-  now 2026-02-25-13:00
+  now 2026-04-09-11:00
   # The currency for all money values is the US Dollar.
   currency "EUR"
 
@@ -47,6 +47,7 @@ account cost "Project Cost" {
   account wFront "Web Front-End"
   account mFront "Mobile Front-end"
   account back "Back-End"
+  account backDeploy "Backend Deployment"
 }
 account rev "Payments"
 # The Profit&Loss analysis should be rev - cost accounts.
@@ -67,6 +68,10 @@ resource dev2 "Samantha Müller" {
 }
 resource dev3 "Peter Green" {
   email "kkk@unizar.es"
+}
+resource dev4 "Iván Larramona" {
+  email "903645@unizar.es"
+  limits { dailymax 4h }
 }
 
 # Now we specify the work packages. The whole project is described as
@@ -95,7 +100,7 @@ task WMGame "Web & Mobile Game" {
     # It is necessary to “purge” the “chargeset” because it has been assigned previously to other variable 
     purge chargeset
     chargeset back
-    responsible dev1
+    responsible dev4
     depends WMGame.tgdesign
     task tBEd "Back End General Design" {
       # The effort to finish this task is 5 man-days.
@@ -105,7 +110,7 @@ task WMGame "Web & Mobile Game" {
     task tlogic "Game logic" {
       effort 12d
       actual:effort 11d
-      allocate dev1, dev2
+      allocate dev1, dev2, dev4
       depends WMGame.tback.tBEd
       journalentry 2026-02-03 "Game logic completed before deadline" {
         author boss
@@ -115,7 +120,7 @@ task WMGame "Web & Mobile Game" {
     }
     task tbackDev "Back development" {
       effort 20d
-      allocate dev1, dev2
+      allocate dev1, dev2, dev4
       depends WMGame.tback.tlogic
     }
   }
@@ -147,13 +152,72 @@ task WMGame "Web & Mobile Game" {
     }    
   }
 
+  task tmobileF "Mobile Front End" {
+    purge chargeset
+    chargeset mFront
+    responsible dev3
+    depends WMGame.tback.tBEd
+    task tGUId "Mobile GUI Design" {
+      effort 9d
+      actual:effort 15d
+      allocate dev3
+      journalentry 2026-01-15 "Problems with the GUI design tool" {
+        author dev3
+        alert yellow
+        summary "The tool used for the GUI design has given me a lot of problems. I recommend to look for other one."
+      }
+    }
+    task tFEc "Mobile Front End Construction" {
+      effort 15d
+      allocate dev2, dev3
+      depends WMGame.tmobileF.tGUId
+    }
+    task tFEt "Mobile Front End Test" {
+      effort 6d
+      allocate dev1
+      depends WMGame.tmobileF.tFEc
+    }    
+  }
+
+  task tdeployB "Backend deploy"{
+    purge chargeset 
+    chargeset backDeploy
+    responsible dev1
+    depends WMGame.tback
+    task tdecissionD "Deploy platform election" {
+      effort 2d
+      actual:effort 1d
+      allocate dev1
+    }
+    task tdeployI "Backend deployment" {
+      effort 3d
+      actual:effort 2d
+      allocate dev1
+      depends WMGame.tdeployB.tdecissionD
+      journalentry 2026-04-09 "Problems with the connection of the deploy platform" {
+        author dev1
+        alert green
+        summary "I have had problems on connecting my PC to handle the connection between backend and the deploy platform."
+      }
+    }
+    task tEvalD "Evaluation of deployment" {
+      effort 4d
+      actual:effort 2d
+      allocate dev1
+      depends WMGame.tdeployB.tdeployI
+    }
+  }
+
   task ttest "Acceptance tests" {
+      minstart 2026-05-15
       effort 10d
       allocate boss
       allocate dev2
       actual:effort 20d
       depends WMGame.twebF
+      depends WMGame.tmobileF
       depends WMGame.tback
+      depends WMGame.tdeployB
       }
 
     
@@ -278,6 +342,15 @@ macro AlertColor [
   cellcolor plan.alert = 1 "#D0D000" # yellow
   cellcolor plan.alert = 2 "#D00000" # red
 ]
+
+taskreport initialPlan "Initial Planification" {
+  scenarios plan
+  headline "Initial planification of the project"
+  columns bsi { title 'WBS' }, name, start, end, effort, cost
+  timeformat "%a %Y-%m-%d"
+  loadunit days
+  hideresource @all
+}
 
 taskreport status "" {
   columns bsi { width 50 title 'WBS' }, name { width 150 },
